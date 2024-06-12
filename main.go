@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gempir/go-twitch-irc/v4"
 )
@@ -13,26 +14,38 @@ type Word struct {
 	Frequency int
 }
 
-func getPopularWords(messages []string) []Word {
+func getPopularMessages(messages []string) map[string]int {
+	popularMessages := make(map[string]int)
+
+	for _, message := range messages {
+		popularMessages[message]++
+	}
+
+	delete(popularMessages, "")
+
+	return popularMessages
+}
+
+func getPopularWordsUnfiltered(messages []string) map[string]int {
 	popularWords := make(map[string]int)
 
 	for _, message := range messages {
 		messageWords := strings.Split(message, " ")
 		// make messageWords unique
-		uniqueWords := make(map[string]bool)
-		for _, word := range messageWords {
-			uniqueWords[word] = true
-		}
 
-		for word := range uniqueWords {
+		for _, word := range messageWords {
 			popularWords[word]++
 		}
 	}
 
 	delete(popularWords, "")
 
+	return popularWords
+}
+
+func sortByFrequency(wordsMap map[string]int) []Word {
 	var words []Word
-	for text, frequency := range popularWords {
+	for text, frequency := range wordsMap {
 		words = append(words, Word{text, frequency})
 	}
 
@@ -49,6 +62,11 @@ func getPopularWords(messages []string) []Word {
 }
 
 func main() {
+	if len(os.Args) != 4 {
+		fmt.Println("Usage: go run main.go <botName> <botToken> <channelName>")
+		return
+	}
+
 	var botName = os.Args[1]
 	var botToken = os.Args[2]
 	var channelName = os.Args[3]
@@ -58,6 +76,7 @@ func main() {
 	var messages []string
 
 	var lastMessageSent = ""
+	var lastMessageTime int64 = 0
 
 	client.OnPrivateMessage(func(message twitch.PrivateMessage) {
 		messages = append(messages, message.Message)
@@ -65,15 +84,45 @@ func main() {
 			messages = messages[1:]
 		}
 
-		popularWords := getPopularWords(messages)
+		popularWords := getPopularWordsUnfiltered(messages)
+		sortedPopularWords := sortByFrequency(popularWords)
+		// print the first 3 most popular words if they exist in one line followed by \r
+		// clear current line
+		fmt.Print("\033[2K")
+		fmt.Print("\r")
+		fmt.Print("Most popular words: ")
+		for i := 0; i < 3 && i < len(sortedPopularWords); i++ {
+			fmt.Print(sortedPopularWords[i], " ")
+		}
 
-		mostPopularWord := popularWords[0]
-		fmt.Println(mostPopularWord)
+		if sortedPopularWords[0].Frequency > 100 && sortedPopularWords[0].Text == "EDM" {
+			// EDM MODE
+			// repeat the first two most popular words for 5 times
+			var newMessage = ""
+			for i := 0; i < 5; i++ {
+				newMessage += sortedPopularWords[0].Text + " " + sortedPopularWords[1].Text + " "
+			}
 
-		if mostPopularWord.Frequency >= 20 && mostPopularWord.Text != lastMessageSent {
-			fmt.Println("Sending message:", mostPopularWord.Text)
-			client.Say(channelName, mostPopularWord.Text)
-			lastMessageSent = mostPopularWord.Text
+			if lastMessageSent != newMessage && time.Now().Unix()-lastMessageTime > 20 {
+				fmt.Println()
+
+				fmt.Println("Sending EDM message:", newMessage)
+				client.Say(channelName, newMessage)
+				lastMessageSent = newMessage
+				lastMessageTime = time.Now().Unix()
+			}
+		} else {
+			mostPopularMessages := getPopularMessages(messages)
+			sortedPopularMessages := sortByFrequency(mostPopularMessages)
+
+			mostPopularMessage := sortedPopularMessages[0]
+			// fmt.Println(mostPopularMessage)
+			if mostPopularMessage.Frequency >= 15 && mostPopularMessage.Text != lastMessageSent {
+				fmt.Println()
+				fmt.Println("Sending message:", mostPopularMessage.Text)
+				client.Say(channelName, mostPopularMessage.Text)
+				lastMessageSent = mostPopularMessage.Text
+			}
 		}
 
 	})
