@@ -103,7 +103,7 @@ func main() {
 				newMessage += sortedPopularWords[0].Text + " " + sortedPopularWords[1].Text + " "
 			}
 
-			if lastMessageSent != newMessage && time.Now().Unix()-lastMessageTime > 20 {
+			if lastMessageSent != newMessage || time.Now().Unix()-lastMessageTime > 31 {
 				fmt.Println()
 
 				fmt.Println("Sending EDM message:", newMessage)
