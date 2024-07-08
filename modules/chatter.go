@@ -62,7 +62,6 @@ func sortByFrequency(wordsMap map[string]int) []Word {
 }
 
 func init() {
-	fmt.Println("Chatter module loaded")
 	registerCommand("chatter", Chatter)
 }
 

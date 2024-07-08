@@ -8,7 +8,6 @@ import (
 )
 
 func init() {
-	fmt.Println("Collect module loaded")
 	registerCommand("collect", Collect)
 }
 
