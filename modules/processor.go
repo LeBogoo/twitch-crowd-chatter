@@ -59,7 +59,7 @@ func Process() {
 			break
 		}
 
-		fmt.Printf("%s: %d\n", sortedStats[i], userStats[sortedStats[i]])
+		fmt.Printf("#%d %s: %d\n", i+1, sortedStats[i], userStats[sortedStats[i]])
 	}
 
 	// print out amount of all chatters
