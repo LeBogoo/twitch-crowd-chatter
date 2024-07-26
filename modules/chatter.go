@@ -99,15 +99,19 @@ func Chatter() {
 			fmt.Print(sortedPopularWords[i], " ")
 		}
 
+		if time.Now().Unix()-lastMessageTime < 31 {
+			return
+		}
+
 		if sortedPopularWords[0].Frequency > 100 && sortedPopularWords[0].Text == "EDM" {
 			// EDM MODE
 			// repeat the first two most popular words for 5 times
 			var newMessage = ""
-			for i := 0; i < 5; i++ {
+			for i := 0; i < 7; i++ {
 				newMessage += sortedPopularWords[0].Text + " " + sortedPopularWords[1].Text + " "
 			}
 
-			if lastMessageSent != newMessage || time.Now().Unix()-lastMessageTime > 31 {
+			if lastMessageSent != newMessage {
 				fmt.Println()
 
 				fmt.Println("Sending EDM message:", newMessage)
@@ -126,6 +130,7 @@ func Chatter() {
 				fmt.Println("Sending message:", mostPopularMessage.Text)
 				client.Say(channelName, mostPopularMessage.Text)
 				lastMessageSent = mostPopularMessage.Text
+				lastMessageTime = time.Now().Unix()
 			}
 		}
 
