@@ -9,12 +9,12 @@ import (
 )
 
 func init() {
-	registerCommand("process", Process)
+	registerCommand("top", Process)
 }
 
 func Process() {
 	if len(os.Args) != 3 {
-		fmt.Println("Usage: twitch-crowd-chatter process <channelName>")
+		fmt.Println("Usage: twitch-crowd-chatter top <channelName>")
 		return
 	}
 
